@@ -18,44 +18,47 @@ public class EventConsumer : BackgroundService
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var config = new ConsumerConfig
+        Task.Run(() =>
         {
-            BootstrapServers = "localhost:9092",
-            GroupId = "$default",
-            AutoOffsetReset = AutoOffsetReset.Earliest
-        };
-
-        using (var consumer = new ConsumerBuilder<Ignore, string>(config).Build())
-        {
-            consumer.Subscribe("accounts-stream");
-
-            try
+            var config = new ConsumerConfig
             {
-                while (true)
+                BootstrapServers = "localhost:9092",
+                GroupId = "$default",
+                AutoOffsetReset = AutoOffsetReset.Earliest
+            };
+
+            using (var consumer = new ConsumerBuilder<Ignore, string>(config).Build())
+            {
+                consumer.Subscribe("accounts-stream");
+
+                try
                 {
-                    var consumeResult = consumer.Consume(stoppingToken);
-
-                    var kafkaEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<AccountEvent>(consumeResult.Value ?? "");
-
-                    if (kafkaEvent == null) { continue; }
-
-                    using (IServiceScope scope = _serviceProvider.CreateScope())
+                    while (true)
                     {
-                        AccountController accountController =
-                            scope.ServiceProvider.GetRequiredService<AccountController>();
+                        var consumeResult = consumer.Consume(stoppingToken);
 
-                        accountController.CreateOrUpdateAccount(kafkaEvent.Data);
+                        var kafkaEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<AccountEvent>(consumeResult.Value ?? "");
+
+                        if (kafkaEvent == null) { continue; }
+
+                        using (IServiceScope scope = _serviceProvider.CreateScope())
+                        {
+                            AccountController accountController =
+                                scope.ServiceProvider.GetService<AccountController>();
+
+                            accountController.CreateOrUpdateAccount(kafkaEvent.Data);
+                        }
                     }
                 }
+                catch (OperationCanceledException)
+                {
+                }
+                finally
+                {
+                    consumer.Close();
+                }
             }
-            catch (OperationCanceledException)
-            {
-            }
-            finally
-            {
-                consumer.Close();
-            }
-        }
+        });
 
         return Task.CompletedTask;
     }

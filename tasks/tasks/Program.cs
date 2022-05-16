@@ -8,13 +8,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
-builder.Services.AddTransient<AccountController>();
-builder.Services.AddDbContext<ApplicationContext>();
+builder.Services.AddScoped<AccountController>();
+builder.Services.AddScoped<EventProducer>();
 builder.Services.AddHostedService<EventConsumer>();
+builder.Services.AddDbContext<ApplicationContext>();
 
 var app = builder.Build();
 
 app.MapGet("/", () => "Hello World!");
+
 app.MapDefaultControllerRoute();
 
 if (app.Environment.IsDevelopment())

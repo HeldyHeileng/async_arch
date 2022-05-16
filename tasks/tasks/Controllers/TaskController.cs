@@ -10,9 +10,9 @@ namespace tasks.Controllers;
 [Route("api/[controller]")]
 public class TaskController : ControllerBase
 {
-    ApplicationContext _dbContext;
-    AccountController _accountController;
-    EventProducer _produser;
+    private readonly ApplicationContext _dbContext;
+    private readonly AccountController _accountController;
+    private readonly EventProducer _producer;
 
     public TaskController(ApplicationContext dbContext,
         AccountController accountController, 
@@ -20,12 +20,12 @@ public class TaskController : ControllerBase
     {
         _dbContext = dbContext;
         _accountController = accountController;
-        _produser = producer;
+        _producer = producer;
     }
 
     [HttpPut("AddTask")]
     
-    public async void AddTask(string description)
+    public async Task AddTask(string description)
     {
         await _accountController.GetCurrentUser(Uri.EscapeDataString(Request.Cookies["_auth_session"] ?? ""));
         
@@ -39,8 +39,9 @@ public class TaskController : ControllerBase
         };
 
         _dbContext.Tasks.Add(task);
-        await _dbContext.SaveChangesAsync();
-        _produser.Produce("task.Added", task);
+        _dbContext.SaveChanges();
+        await _producer.Produce("task-added", task);
+        await _producer.Produce("task-created", task);
 
     }
 
@@ -62,8 +63,8 @@ public class TaskController : ControllerBase
 
         task.Status = TaskStatusEnum.Completed;
         _dbContext.Tasks.Update(task);
-        await _dbContext.SaveChangesAsync();
-        _produser.Produce("task.Completed", task);
+        _dbContext.SaveChanges();
+        await _producer.Produce("task-completed", task);
     }
 
     [HttpPost("Shuffle")]
@@ -87,8 +88,8 @@ public class TaskController : ControllerBase
         Random random = new Random();
         tasksToShuffle.ForEach(t => t.AccountId = activeAccounts[random.Next(activeAccounts.Count)].AccountId);
         _dbContext.Tasks.UpdateRange(tasksToShuffle);
-        await _dbContext.SaveChangesAsync();
-        _produser.Produce("task.Shuffled", tasksToShuffle);
+        _dbContext.SaveChanges();
+        await _producer.Produce("task-shuffled", tasksToShuffle);
     }
 
     [NonAction]

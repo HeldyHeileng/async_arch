@@ -1,12 +1,13 @@
 ﻿using tasks.Models;
 using tasks.Context;
 using System.Net;
+using Microsoft.EntityFrameworkCore;
 
 namespace tasks.Controllers;
 
 public class AccountController
 {
-    ApplicationContext _dbContext; 
+    private readonly ApplicationContext _dbContext; 
 
     public AccountController(ApplicationContext dbContext)
     {
@@ -17,7 +18,7 @@ public class AccountController
     {
         return _dbContext
             .Accounts
-            .Where(a => a.Active && a.Role == "worker")
+            .Where(a => a.Role == "worker")
             .ToList();
     }
 
@@ -45,17 +46,22 @@ public class AccountController
 
     public void CreateOrUpdateAccount(Account account)
     {
-        var dbAccount =_dbContext.Accounts.FirstOrDefault(a => a.AccountId == account.AccountId);
+        var dbAccount =_dbContext
+            .Accounts
+            .AsNoTracking()
+            .FirstOrDefault(a => a.AccountId == account.AccountId);
 
         if (dbAccount == null)
         {
             _dbContext.Accounts.Add(account);
-            _dbContext.SaveChangesAsync();
+            _dbContext.SaveChanges();
             return;
         }
 
+        account.Role = account.Role ?? dbAccount.Role;
+
         _dbContext.Update(account);
-        _dbContext.SaveChangesAsync();
+        _dbContext.SaveChanges();
         return;
     }
 

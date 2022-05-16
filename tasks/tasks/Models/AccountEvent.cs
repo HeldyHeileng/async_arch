@@ -8,8 +8,8 @@ public class AccountEvent
     public Guid EventId { get; set; }
     [JsonProperty("event_version")]
     public int Version { get; set; }
-    [JsonProperty("event_time")]
-    public DateTime Event_Time { get; set; }
+    [JsonProperty("produced_at")]
+    public DateTime ProducedAt { get; set; }
     public string Producer { get; set; }
     [JsonProperty("event_name")]
     public string EventName { get; set; }
