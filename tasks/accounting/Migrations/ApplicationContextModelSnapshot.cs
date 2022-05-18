@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using tasks.Context;
+using accounting.Context;
 
 #nullable disable
 
-namespace tasks.Migrations
+namespace accounting.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
     partial class ApplicationContextModelSnapshot : ModelSnapshot
@@ -22,19 +22,16 @@ namespace tasks.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("tasks.Models.Account", b =>
+            modelBuilder.Entity("accounting.Models.Account", b =>
                 {
                     b.Property<Guid>("AccountId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("Active")
-                        .HasColumnType("boolean");
+                    b.Property<int>("Balance")
+                        .HasColumnType("integer");
 
                     b.Property<string>("FullName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Role")
                         .HasColumnType("text");
 
                     b.HasKey("AccountId");
@@ -42,7 +39,7 @@ namespace tasks.Migrations
                     b.ToTable("Accounts");
                 });
 
-            modelBuilder.Entity("tasks.Models.TrackerTask", b =>
+            modelBuilder.Entity("accounting.Models.TrackerTask", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -52,6 +49,12 @@ namespace tasks.Migrations
 
                     b.Property<Guid>("AccountId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("AssignCost")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CompleteCost")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -70,12 +73,44 @@ namespace tasks.Migrations
                     b.Property<Guid>("PublicId")
                         .HasColumnType("uuid");
 
-                    b.Property<int>("Status")
+                    b.HasKey("Id");
+
+                    b.ToTable("Tasks");
+                });
+
+            modelBuilder.Entity("accounting.Models.Transaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Amount")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("PublicId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Type")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tasks");
+                    b.ToTable("Transactions");
                 });
 #pragma warning restore 612, 618
         }
