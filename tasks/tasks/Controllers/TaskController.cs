@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using System.Web;
 using tasks.Context;
 using tasks.Kafka;
@@ -55,8 +56,8 @@ public class TaskController : ControllerBase
 
         _dbContext.Tasks.Add(task);
         _dbContext.SaveChanges();
-        await _producer.Produce("tasks", "task-added", task);
-        await _producer.Produce("tasks", "task-created", task);
+        await _producer.Produce<proto.TaskAddedV2>("tasks", "task-added", task);
+        await _producer.Produce<proto.TaskCreatedV2>("tasks", "task-created", task);
 
     }
 
@@ -81,7 +82,7 @@ public class TaskController : ControllerBase
         task.Status = TaskStatusEnum.Completed;
         _dbContext.Tasks.Update(task);
         _dbContext.SaveChanges();
-        await _producer.Produce("tasks", "task-completed", task);
+        await _producer.Produce<proto.TaskCompletedV1>("tasks", "task-completed", task);
     }
 
     [HttpPost("Shuffle")]
@@ -106,7 +107,7 @@ public class TaskController : ControllerBase
         tasksToShuffle.ForEach(t => t.AccountId = activeAccounts[random.Next(activeAccounts.Count)].AccountId);
         _dbContext.Tasks.UpdateRange(tasksToShuffle);
         _dbContext.SaveChanges();
-        tasksToShuffle.ForEach(async task => await _producer.Produce("tasks", "task-shuffled", task));
+        tasksToShuffle.ForEach(async task => await _producer.Produce<proto.TaskShuffledV1>("tasks", "task-shuffled", task));
     }
 
     [NonAction]

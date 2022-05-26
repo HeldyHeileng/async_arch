@@ -57,9 +57,9 @@ public class AccountController
         {
             PublicId = new Guid(),
             AccountId = x.AccountId,
-            Amount = x.Balance,
+            Debit = x.Balance,
             Description = $"End of the day payment for {DateTime.UtcNow.Date}",
-            Type = TransactionType.EndOfTheDayPayment,
+            Type = TransactionType.Payment,
             CreatedAt = DateTime.UtcNow,
         })
             .ToList();
@@ -71,8 +71,8 @@ public class AccountController
         _dbContext.UpdateRange(accountsToPay);
         _dbContext.SaveChanges();
 
-        transactions.ForEach(async t => await _eventProducer.Produce("transaction", "transaction-added", t));
-        accountsToPay.ForEach(async a => await _eventProducer.Produce("account", "account-balance-changed", a));
+        transactions.ForEach(async t => await _eventProducer.Produce<proto.TransactionAppliedV1>("transaction", "transaction-applied", t));
+        accountsToPay.ForEach(async a => await _eventProducer.Produce<proto.AccountBalanceChangedV1>("account", "account-balance-changed", a));
     }
     
 }
