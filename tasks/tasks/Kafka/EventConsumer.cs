@@ -37,7 +37,7 @@ public class EventConsumer : BackgroundService
                     {
                         var consumeResult = consumer.Consume(stoppingToken);
 
-                        var kafkaEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<AccountEvent>(consumeResult.Value ?? "");
+                        var kafkaEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<BusEvent<Account>>(consumeResult.Value ?? "");
 
                         if (kafkaEvent == null) { continue; }
 

@@ -1,13 +1,13 @@
-using tasks.Context;
-using tasks.Controllers;
-using tasks.Kafka;
+using analytics.Controllers;
+using analytics.Kafka;
+using analytics.Context;
 
-var builder = WebApplication.CreateBuilder(args); 
+var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddScoped<AccountController>();
-builder.Services.AddScoped<EventProducer>();
+builder.Services.AddScoped<TransactionController>();
 builder.Services.AddHostedService<EventConsumer>();
 builder.Services.AddDbContext<ApplicationContext>();
 

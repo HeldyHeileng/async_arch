@@ -65,4 +65,8 @@ public class AccountController
         return;
     }
 
+    public Account? Get(Guid id)
+    {
+        return _dbContext.Accounts.FirstOrDefault(a => a.AccountId == id);
+    }
 }

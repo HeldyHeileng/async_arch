@@ -1,4 +1,7 @@
 
-/tasks/.vs
-/tasks/tasks/bin
-/tasks/tasks/obj/
+/*/.vs
+/*/tasks/bin
+/*/tasks/obj/
+/tasks/*/bin/
+/tasks/.vs/
+/tasks/*/obj/

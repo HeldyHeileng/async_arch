@@ -1,8 +1,8 @@
 ﻿using Newtonsoft.Json;
 
-namespace tasks.Models;
+namespace accounting.Models;
 
-public class AccountEvent
+public class BusEvent<T>
 {    
     [JsonProperty("event_id")]
     public Guid EventId { get; set; }
@@ -14,5 +14,5 @@ public class AccountEvent
     [JsonProperty("event_name")]
     public string EventName { get; set; }
 
-    public Account Data { get; set; }
+    public T Data { get; set; }
 }

@@ -1,7 +1,7 @@
 ﻿using Confluent.Kafka;
-using tasks.Models;
+using accounting.Models;
 
-namespace tasks.Kafka;
+namespace accounting.Kafka;
 
 public class EventProducer
 {

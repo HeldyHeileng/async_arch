@@ -25,23 +25,38 @@ public class TaskController : ControllerBase
 
     [HttpPut("AddTask")]
     
-    public async Task AddTask(string description)
+    public async Task AddTask(Guid assigneeId, string jiraId, string name, string description)
     {
-        await _accountController.GetCurrentUser(Uri.EscapeDataString(Request.Cookies["_auth_session"] ?? ""));
-        
-        var workerId = _accountController.GetRandomWorkerId();
+        var userAccount = await _accountController.GetCurrentUser(Uri.EscapeDataString(Request.Cookies["_auth_session"] ?? ""));
+
+        if (userAccount.Role != "admin" && userAccount.Role != "manager")
+        {
+            throw new Exception("not enough role");
+        }
+
+        var assignee = _accountController.Get(assigneeId);
+
+        if (assignee == null)
+        {
+            //вот здесь можно сохранить что знаем об аккаунте и создать таску
+            throw new Exception("assignee with such id not found");
+        }
+
         var task = new TrackerTask()
         {
+            JiraId = jiraId,
+            Name = name,
             Description = description,
-            AccountId = workerId,
+            AccountId = assignee.AccountId,
             PublicId = Guid.NewGuid(),
-            Status = TaskStatusEnum.Active
+            Status = TaskStatusEnum.Active,
+            CreatedAt = DateTime.UtcNow,
         };
 
         _dbContext.Tasks.Add(task);
         _dbContext.SaveChanges();
-        await _producer.Produce("task-added", task);
-        await _producer.Produce("task-created", task);
+        await _producer.Produce("tasks", "task-added", task);
+        await _producer.Produce("tasks", "task-created", task);
 
     }
 
@@ -53,6 +68,8 @@ public class TaskController : ControllerBase
         var task = _dbContext.Tasks.FirstOrDefault(t => t.Id == taskId);
         if (task == null)
         {
+            //тут я бы лучше отправила в ретрай и подождала пока таска придет
+            //потому что то, что заплатим попугу деньги за комплит, но не спишем за ассайн может его запутать
             throw new Exception("task not found");
         }
 
@@ -64,7 +81,7 @@ public class TaskController : ControllerBase
         task.Status = TaskStatusEnum.Completed;
         _dbContext.Tasks.Update(task);
         _dbContext.SaveChanges();
-        await _producer.Produce("task-completed", task);
+        await _producer.Produce("tasks", "task-completed", task);
     }
 
     [HttpPost("Shuffle")]
@@ -89,7 +106,7 @@ public class TaskController : ControllerBase
         tasksToShuffle.ForEach(t => t.AccountId = activeAccounts[random.Next(activeAccounts.Count)].AccountId);
         _dbContext.Tasks.UpdateRange(tasksToShuffle);
         _dbContext.SaveChanges();
-        await _producer.Produce("task-shuffled", tasksToShuffle);
+        tasksToShuffle.ForEach(async task => await _producer.Produce("tasks", "task-shuffled", task));
     }
 
     [NonAction]
