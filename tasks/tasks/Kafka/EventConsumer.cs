@@ -20,6 +20,13 @@ public class EventConsumer : BackgroundService
     {
         Task.Run(() =>
         {
+
+            using IServiceScope scope = _serviceProvider.CreateScope();
+            
+            AccountController? accountController = scope.ServiceProvider.GetService<AccountController>();
+
+            if (accountController == null) { return; }
+
             var config = new ConsumerConfig
             {
                 BootstrapServers = "localhost:9092",
@@ -27,38 +34,30 @@ public class EventConsumer : BackgroundService
                 AutoOffsetReset = AutoOffsetReset.Earliest
             };
 
-            using (var consumer = new ConsumerBuilder<Ignore, string>(config).Build())
+            using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
+            consumer.Subscribe("accounts-stream");
+
+            try
             {
-                consumer.Subscribe("accounts-stream");
-
-                try
+                while (true)
                 {
-                    while (true)
-                    {
-                        var consumeResult = consumer.Consume(stoppingToken);
+                    var consumeResult = consumer.Consume();
 
-                        var kafkaEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<BusEvent<Account>>(consumeResult.Value ?? "");
+                    var kafkaEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<BusEvent<Account>>(consumeResult.Message.Value);
 
-                        if (kafkaEvent == null) { continue; }
+                    if (kafkaEvent == null) { continue; }
 
-                        using (IServiceScope scope = _serviceProvider.CreateScope())
-                        {
-                            AccountController accountController =
-                                scope.ServiceProvider.GetService<AccountController>();
-
-                            accountController.CreateOrUpdateAccount(kafkaEvent.Data);
-                        }
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                }
-                finally
-                {
-                    consumer.Close();
+                    accountController.CreateOrUpdateAccount(kafkaEvent.Data);
                 }
             }
-        });
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                consumer.Close();
+            }
+        }, stoppingToken);
 
         return Task.CompletedTask;
     }

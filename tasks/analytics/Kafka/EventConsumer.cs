@@ -16,7 +16,7 @@ public class EventConsumer : BackgroundService
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        Task.Run(() =>
+            Task.Run(() =>
         {
             var config = new ConsumerConfig
             {
@@ -26,12 +26,12 @@ public class EventConsumer : BackgroundService
 
             using (var consumer = new ConsumerBuilder<Ignore, string>(config).Build())
             {
-                consumer.Subscribe("account");
+            consumer.Subscribe("account");
 
-                try
+            try
+            {
+                while (true)
                 {
-                    while (true)
-                    {
                         var consumeResult = consumer.Consume(stoppingToken);
 
                         var kafkaEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<BusEvent<Account>>(consumeResult.Value ?? "");
@@ -47,17 +47,17 @@ public class EventConsumer : BackgroundService
 
                                 accountController.UpdateAccount(kafkaEvent.Data);
                             }
-                            continue;
-                        }
+                        continue;
                     }
                 }
-                catch (OperationCanceledException)
-                {
-                }
-                finally
-                {
-                    consumer.Close();
-                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                consumer.Close();
+            }
             }
         });
 
@@ -72,12 +72,12 @@ public class EventConsumer : BackgroundService
 
             using (var consumer = new ConsumerBuilder<Ignore, string>(config).Build())
             {
-                consumer.Subscribe("transaction");
+            consumer.Subscribe("transaction");
 
-                try
+            try
+            {
+                while (true)
                 {
-                    while (true)
-                    {
                         var consumeResult = consumer.Consume(stoppingToken);
 
                         var kafkaEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<BusEvent<Transaction>>(consumeResult.Value ?? "");
@@ -93,23 +93,29 @@ public class EventConsumer : BackgroundService
 
                                 transactionController.Save(kafkaEvent.Data);
                             }
-                            continue;
-                        }
+                        continue;
                     }
                 }
-                catch (OperationCanceledException)
-                {
-                }
-                finally
-                {
-                    consumer.Close();
-                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                consumer.Close();
+            }
             }
         });
 
 
         Task.Run(() =>
         {
+
+            using IServiceScope scope = _serviceProvider.CreateScope();
+            AccountController? accountController =
+                    scope.ServiceProvider.GetService<AccountController>();
+
+            if (accountController == null) { return; }
             var config = new ConsumerConfig
             {
                 BootstrapServers = "localhost:9092",
@@ -117,36 +123,28 @@ public class EventConsumer : BackgroundService
                 AutoOffsetReset = AutoOffsetReset.Earliest
             };
 
-            using (var consumer = new ConsumerBuilder<Ignore, string>(config).Build())
+            using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
+            consumer.Subscribe("accounts-stream");
+
+            try
             {
-                consumer.Subscribe("accounts-stream");
-
-                try
+                while (true)
                 {
-                    while (true)
-                    {
-                        var consumeResult = consumer.Consume(stoppingToken);
+                    var consumeResult = consumer.Consume();
 
-                        var kafkaEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<BusEvent<Account>>(consumeResult.Value ?? "");
+                    var kafkaEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<BusEvent<Account>>(consumeResult.Message.Value);
 
-                        if (kafkaEvent == null) { continue; }
+                    if (kafkaEvent == null) { continue; }
+                    accountController.CreateAccount(kafkaEvent.Data);
 
-                        using (IServiceScope scope = _serviceProvider.CreateScope())
-                        {
-                            AccountController accountController =
-                                scope.ServiceProvider.GetService<AccountController>();
-
-                            accountController.CreateAccount(kafkaEvent.Data);
-                        }
-                    }
                 }
-                catch (OperationCanceledException)
-                {
-                }
-                finally
-                {
-                    consumer.Close();
-                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                consumer.Close();
             }
         });
         return Task.CompletedTask;

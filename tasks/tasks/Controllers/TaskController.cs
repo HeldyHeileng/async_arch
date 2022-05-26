@@ -102,7 +102,7 @@ public class TaskController : ControllerBase
             throw new Exception("no workers");
         }
 
-        Random random = new Random();
+        var random = new Random();
         tasksToShuffle.ForEach(t => t.AccountId = activeAccounts[random.Next(activeAccounts.Count)].AccountId);
         _dbContext.Tasks.UpdateRange(tasksToShuffle);
         _dbContext.SaveChanges();
