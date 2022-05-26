@@ -1,4 +1,4 @@
-﻿namespace tasks.Models;
+﻿namespace accounting.Models;
 
 public class TrackerTask
 {
@@ -8,7 +8,10 @@ public class TrackerTask
     public string Name { get; set; }
     public string? Description { get; set; }
     public Guid AccountId { get; set; }
-    public TaskStatusEnum Status { get; set; }
+
+    public int AssignCost { get; set; }
+    public int CompleteCost { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
 }
