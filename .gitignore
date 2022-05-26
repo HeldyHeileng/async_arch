@@ -5,3 +5,4 @@
 /tasks/*/bin/
 /tasks/.vs/
 /tasks/*/obj/
+/proto/proto/obj/

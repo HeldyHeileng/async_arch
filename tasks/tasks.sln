@@ -10,9 +10,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "accounting", "accounting\accounting.csproj", "{5473765F-AE4C-4CA6-B558-07C8C84D2A01}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "accounting", "accounting\accounting.csproj", "{5473765F-AE4C-4CA6-B558-07C8C84D2A01}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "analytics", "analytics\analytics.csproj", "{C99B7AFB-8981-4A92-A998-2DC33AD32ED8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "analytics", "analytics\analytics.csproj", "{C99B7AFB-8981-4A92-A998-2DC33AD32ED8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "proto", "proto\proto.csproj", "{02B894F1-96B7-4C24-843B-A831CA478BC9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -32,6 +34,10 @@ Global
 		{C99B7AFB-8981-4A92-A998-2DC33AD32ED8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C99B7AFB-8981-4A92-A998-2DC33AD32ED8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C99B7AFB-8981-4A92-A998-2DC33AD32ED8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02B894F1-96B7-4C24-843B-A831CA478BC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02B894F1-96B7-4C24-843B-A831CA478BC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02B894F1-96B7-4C24-843B-A831CA478BC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02B894F1-96B7-4C24-843B-A831CA478BC9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

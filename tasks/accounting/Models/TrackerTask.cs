@@ -1,8 +1,10 @@
-﻿namespace accounting.Models;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace accounting.Models;
 
 public class TrackerTask
 {
-    public int Id { get; set; }
+    [Key]
     public Guid PublicId { get; set; }
     public string JiraId { get; set; }
     public string Name { get; set; }

@@ -25,7 +25,7 @@ public class AccountController
     public Guid GetRandomWorkerId()
     {
         var list = GetActiveWorkerList();
-        Random random = new Random();
+        var random = new Random();
         int index = random.Next(list.Count);
         random.Next(list.Count);
         return list[index].AccountId;
@@ -33,7 +33,7 @@ public class AccountController
 
     public async Task<Account> GetCurrentUser(string _auth_session)
     {
-        HttpClient client = new HttpClient();
+        var client = new HttpClient();
         client.DefaultRequestHeaders.Add("cookie", "_auth_session=" + _auth_session);
         var json = await client.GetStringAsync("http://localhost:3000/accounts/current.json");
         var account = Newtonsoft.Json.JsonConvert.DeserializeObject<Account>(json);
@@ -58,7 +58,7 @@ public class AccountController
             return;
         }
 
-        account.Role = account.Role ?? dbAccount.Role;
+        account.Role ??= dbAccount.Role;
 
         _dbContext.Update(account);
         _dbContext.SaveChanges();

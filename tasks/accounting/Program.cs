@@ -1,10 +1,12 @@
 using accounting.Controllers;
 using accounting.Kafka;
 using accounting.Context;
+using accounting;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAutoMapper(mc => mc.AddProfile(new MappingProfile()));
 builder.Services.AddControllers();
 builder.Services.AddScoped<AccountController>();
 builder.Services.AddScoped<TaskEventHandlers>();
