@@ -20,8 +20,8 @@ public class AnalyticsController
         return _dbContext.Transactions
             .Where(x => 
                 x.CreatedAt.Date == DateTime.UtcNow.Date &&
-                x.Type != Models.TransactionType.EndOfTheDayPayment)
-            .Sum(x => x.Amount);
+                x.Type != Models.TransactionType.Payment)
+            .Sum(x => x.Credit - x.Debit);
     }
 
     [HttpGet("NegativeAccountsCount")]
@@ -36,7 +36,7 @@ public class AnalyticsController
     public int GetTodaysMostValuableTask()
     {
         return _dbContext.Transactions
-            .Where(x => x.CreatedAt.Date == DateTime.UtcNow.Date && x.Type == Models.TransactionType.CompleteTaskAssess)
-            .Max(x => x.Amount);
+            .Where(x => x.CreatedAt.Date == DateTime.UtcNow.Date && x.Type == Models.TransactionType.Deposit)
+            .Max(x => x.Credit);
     }
  }

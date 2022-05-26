@@ -1,7 +1,8 @@
 ﻿using analytics.Controllers;
 using analytics.Models;
+using AutoMapper;
 using Confluent.Kafka;
-
+using proto.Tools;
 
 namespace analytics.Kafka;
 
@@ -16,6 +17,13 @@ public class EventConsumer : BackgroundService
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        using IServiceScope scope = _serviceProvider.CreateScope();
+        AccountController? accountController =
+                scope.ServiceProvider.GetService<AccountController>();
+        IMapper? mapper = scope.ServiceProvider.GetService<IMapper>();
+
+        if (accountController == null || mapper == null) { return Task.CompletedTask; }
+
             Task.Run(() =>
         {
             var config = new ConsumerConfig
@@ -24,29 +32,23 @@ public class EventConsumer : BackgroundService
                 GroupId = "analytics-account"
             };
 
-            using (var consumer = new ConsumerBuilder<Ignore, string>(config).Build())
-            {
+            using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
             consumer.Subscribe("account");
 
             try
             {
                 while (true)
                 {
-                        var consumeResult = consumer.Consume(stoppingToken);
+                    var consumeResult = consumer.Consume();
 
-                        var kafkaEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<BusEvent<Account>>(consumeResult.Value ?? "");
+                    if (consumeResult.Message.Headers.GetHeader("eventName") == "account-balance-changed")
+                    {
+                        var kafkaEvent = consumeResult.Message.Value.FromProtobufString<proto.BusEvent<proto.AccountBalanceChangedV1>>();
 
                         if (kafkaEvent == null) { continue; }
 
-                        if (kafkaEvent.EventName == "account-balance-changed")
-                        {
-                            using (IServiceScope scope = _serviceProvider.CreateScope())
-                            {
-                                AccountController accountController =
-                                    scope.ServiceProvider.GetService<AccountController>();
+                        accountController.UpdateAccount(mapper.Map<Account>(kafkaEvent.Data));
 
-                                accountController.UpdateAccount(kafkaEvent.Data);
-                            }
                         continue;
                     }
                 }
@@ -57,42 +59,41 @@ public class EventConsumer : BackgroundService
             finally
             {
                 consumer.Close();
-            }
             }
         });
 
 
         Task.Run(() =>
         {
+            using IServiceScope scope = _serviceProvider.CreateScope();
+                TransactionController? transactionController =
+                    scope.ServiceProvider.GetService<TransactionController>();
+
+            if (transactionController == null) { return; }
+
             var config = new ConsumerConfig
             {
                 BootstrapServers = "localhost:9092",
                 GroupId = "analytics-transaction"
             };
 
-            using (var consumer = new ConsumerBuilder<Ignore, string>(config).Build())
-            {
+            using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
             consumer.Subscribe("transaction");
 
             try
             {
                 while (true)
                 {
-                        var consumeResult = consumer.Consume(stoppingToken);
+                    var consumeResult = consumer.Consume();
 
-                        var kafkaEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<BusEvent<Transaction>>(consumeResult.Value ?? "");
+                    if (consumeResult.Message.Headers.GetHeader("eventName") == "transaction-applied")
+                    {
+                        var kafkaEvent = consumeResult.Message.Value.FromProtobufString<proto.BusEvent<proto.TransactionAppliedV1>>();
 
                         if (kafkaEvent == null) { continue; }
 
-                        if (kafkaEvent.EventName == "transaction-added")
-                        {
-                            using (IServiceScope scope = _serviceProvider.CreateScope())
-                            {
-                                TransactionController transactionController =
-                                    scope.ServiceProvider.GetService<TransactionController>();
+                        transactionController.Save(mapper.Map<Transaction>(kafkaEvent.Data));
 
-                                transactionController.Save(kafkaEvent.Data);
-                            }
                         continue;
                     }
                 }
@@ -103,7 +104,6 @@ public class EventConsumer : BackgroundService
             finally
             {
                 consumer.Close();
-            }
             }
         });
 

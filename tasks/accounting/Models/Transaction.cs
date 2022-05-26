@@ -6,7 +6,8 @@ public class Transaction
     public Guid PublicId { get; set; }
     public Guid AccountId { get; set; }
     public Guid? TaskId { get; set; }
-    public int Amount { get; set; }
+    public int Debit { get; set; }
+    public int Credit { get; set; }
     public string Description { get; set; }
     public DateTime CreatedAt { get; set; }
     public TransactionType Type { get; set; }
@@ -15,7 +16,7 @@ public class Transaction
 
 public enum TransactionType
 {
-    AssignmentCharge,
-    CompleteTaskAssess,
-    EndOfTheDayPayment
+    Withdraw,
+    Deposit,
+    Payment
 }
